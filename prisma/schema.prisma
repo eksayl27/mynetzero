@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organisation {
+  id          String    @id @default(cuid())
+  name        String
+  countryCode String    @default("AU")
+  plan        String    @default("household") // household|smb
+  invoices    Invoice[]
+  createdAt   DateTime  @default(now())
+}
+
+model Invoice {
+  id           String        @id @default(cuid())
+  orgId        String
+  vendor       String?
+  date         DateTime?
+  total        Decimal?      @db.Decimal(18, 2)
+  currency     String?       @default("AUD")
+  category     String?
+  include      Boolean       @default(true)
+  lines        InvoiceLine[]
+  createdAt    DateTime      @default(now())
+  Organisation Organisation  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model InvoiceLine {
+  id               String   @id @default(cuid())
+  invoiceId        String
+  description      String?
+  qty              Decimal? @db.Decimal(18, 6)
+  unit             String?
+  amount           Decimal? @db.Decimal(18, 2)
+  inferredActivity String?
+  include          Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  Invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
